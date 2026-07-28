@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WonderTale Kingdom</title>
+</head>
+<body style="margin:0;">
+<div id="root"></div>
+<div id="boot-error" style="display:none; font-family:sans-serif; color:#B4633A; padding:24px; white-space:pre-wrap;"></div>
+
+<!-- Tells the browser where to fetch bare import names like "react" from -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18",
+    "react-dom/client": "https://esm.sh/react-dom@18/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.383.0?external=react"
+  }
+}
+</script>
+
+<!-- Babel Standalone: transforms JSX in the browser, no build step needed -->
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+<!-- The actual app source, kept inert as plain text so the browser doesn't try to run it directly -->
+<script type="text/plain" id="app-source">import React, {
+  useState, useEffect, useMemo, useRef,
+} from "react";
+import ReactDOM from "react-dom/client";
+import {
+  BookOpen, Headphones, Film, Wand2, Sparkles, Search, Star, Home,
+  Clock, Bookmark, Heart, Download, Printer, Share2, Moon, Sun,
+  ChevronLeft, ChevronRight, X, Flame, Award, Gem, BarChart3,
+  TrendingUp, ShieldCheck, Bell, ChevronDown, Sliders, MapPin, Lock,
+  RefreshCw, Check, Send, Mic2, Gauge, SkipBack, SkipForward, Play, Pause,
+  RotateCcw, Menu, Captions, Trophy, HelpCircle,
+} from "lucide-react";
+
+
+/* ============================== SHARED DATA ============================== */
+
+const NAV_ITEMS = [
+  { id: "home", label: "Home", icon: Home },
+  { id: "reader", label: "Story", icon: BookOpen },
+  { id: "listen", label: "Listen", icon: Headphones },
+  { id: "watch", label: "Watch", icon: Film },
+  { id: "library", label: "Library", icon: Search },
+  { id: "map", label: "World Map", icon: MapPin },
+  { id: "adventure", label: "Adventure", icon: Sparkles },
+  { id: "generator", label: "AI Story", icon: Wand2 },
+  { id: "chat", label: "Chat", icon: Mic2 },
+  { id: "child", label: "My Kingdom", icon: Award },
+  { id: "parent", label: "For Parents", icon: ShieldCheck },
+];
+
+const GLOBAL_FONT_IMPORT =
+  "@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Quicksand:wght@400;500;600;700&display=swap');";
+
+/* ============================== TOP NAV ============================== */
+
+function TopNav({ page, setPage }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 200,
+        background: "rgba(15,14,36,0.92)",
+        backdropFilter: "blur(10px)",
+        borderBottom: "1px solid rgba(232,178,77,0.2)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 20px",
+          maxWidth: 1200,
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+          onClick={() => setPage("home")}
+        >
+          <Wand2 size={19} color="#E8B24D" />
+          <span style={{ fontFamily: "'Fraunces', serif", fontSize: 17, fontWeight: 600, color: "#F3EEE3" }}>
+            WonderTale Kingdom
+          </span>
+        </div>
+
+        {/* desktop nav */}
+        <div style={{ display: "none", gap: 4 }} className="wt-desktop-nav">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setPage(item.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "7px 11px",
+                borderRadius: 999,
+                border: "none",
+                background: page === item.id ? "rgba(232,178,77,0.18)" : "transparent",
+                color: page === item.id ? "#E8B24D" : "#F3EEE3",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <item.icon size={13} /> {item.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="wt-mobile-toggle"
+          style={{ background: "none", border: "none", color: "#F3EEE3", cursor: "pointer" }}
+        >
+          <Menu size={22} />
+        </button>
+      </div>
+
+      {open && (
+        <div
+          className="wt-mobile-toggle"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: 8,
+            padding: "0 20px 18px",
+          }}
+        >
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setPage(item.id);
+                setOpen(false);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "10px 12px",
+                borderRadius: 12,
+                border: `1px solid ${page === item.id ? "#E8B24D" : "rgba(255,255,255,0.12)"}`,
+                background: page === item.id ? "rgba(232,178,77,0.15)" : "rgba(255,255,255,0.04)",
+                color: page === item.id ? "#E8B24D" : "#F3EEE3",
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <item.icon size={14} /> {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <style>{`
+        @media (min-width: 900px) {
+          .wt-desktop-nav { display: flex !important; }
+          .wt-mobile-toggle { display: none !important; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ============================== HOME PAGE ============================== */
+
+function useParticles(count, seedOffset = 0) {
+  return useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: i,
+        left: (i * 37 + seedOffset * 13) % 100,
+        top: (i * 53 + seedOffset * 7) % 100,
+        delay: (i * 0.37 + seedOffset) % 6,
+        duration: 3 + ((i * 0.61) % 4),
+        size: 2 + ((i * 0.29) % 3),
+      })),
+    [count, seedOffset]
+  );
+}
+
+const CATEGORIES = [
+  { name: "Fantasy", icon: "🏰" }, { name: "Dragons", icon: "🐉" },
+  { name: "Fairy Tales", icon: "🧚" }, { name: "Magic School", icon: "📜" },
+  { name: "Space", icon: "🌙" }, { name: "Ocean", icon: "🐚" },
+  { name: "Pirates", icon: "🗺️" }, { name: "Dinosaurs", icon: "🦕" },
+  { name: "Friendship", icon: "🌷" }, { name: "Bedtime Stories", icon: "🌟" },
+  { name: "Mystery", icon: "🔮" }, { name: "Moral Stories", icon: "🕊️" },
+];
+
+const KINGDOMS_PREVIEW = [
+  { name: "Dragon Mountain", blurb: "Where the sky belongs to wings of fire.", color: "#E8B24D" },
+  { name: "Crystal Cave", blurb: "Echoes turn to light with every step.", color: "#8FD3C8" },
+  { name: "Candy Kingdom", blurb: "A realm built from spun sugar and song.", color: "#F4C9E0" },
+];
+
+function HomePage({ go }) {
+  const stars = useParticles(50, 1);
+
+  return (
+    <div style={{ background: "#0F0E24" }}>
+      <header
+        style={{
+          position: "relative",
+          minHeight: "78vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: "50px 20px 40px",
+          background: "radial-gradient(ellipse at 50% 0%, #3A2E68 0%, #1C1A3A 45%, #0F0E24 100%)",
+          overflow: "hidden",
+        }}
+      >
+        {stars.map((s) => (
+          <div key={s.id} style={{
+            position: "absolute", left: `${s.left}%`, top: `${s.top * 0.7}%`,
+            width: s.size, height: s.size, borderRadius: "50%", background: "#FBF3E7",
+            animation: `wtTwinkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
+          }} />
+        ))}
+        <div style={{ position: "absolute", top: "26%", left: "50%", width: 0, height: 0 }}>
+          <div style={{ animation: "wtCircleDragon 16s linear infinite", fontSize: 26 }}>🐉</div>
+        </div>
+
+        <Sparkles size={28} color="#F4C9E0" style={{ marginBottom: 10, animation: "wtTwinkle 2.4s ease-in-out infinite" }} />
+        <h1 style={{
+          fontFamily: "'Fraunces', serif", fontSize: "clamp(2.1rem, 6vw, 3.6rem)", fontWeight: 700,
+          margin: "0 0 14px",
+          background: "linear-gradient(180deg, #FBF3E7 0%, #E8B24D 100%)",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.1,
+        }}>
+          Welcome to WonderTale Kingdom
+        </h1>
+        <p style={{ maxWidth: 460, fontSize: 16, opacity: 0.85, marginBottom: 30, lineHeight: 1.6, color: "#F3EEE3" }}>
+          Every page is a door. Every story, a place to visit. Step through the gates
+          and let the kingdom read to you, watch with you, and grow with you.
+        </p>
+        <div style={{ fontSize: "clamp(56px, 13vw, 100px)", marginBottom: 30, animation: "wtCastleGlow 3.5s ease-in-out infinite" }}>🏰</div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center", maxWidth: 640 }}>
+          {[
+            { label: "Read Stories", icon: BookOpen, bg: "#E8B24D", page: "reader" },
+            { label: "Listen Stories", icon: Headphones, bg: "#B49AE8", page: "listen" },
+            { label: "Watch Stories", icon: Film, bg: "#7EC8E3", page: "library" },
+            { label: "Explore Adventures", icon: Wand2, bg: "#F4C9E0", page: "adventure" },
+          ].map(({ label, icon: Icon, bg, page }) => (
+            <button key={label} className="wt-btn-portal" onClick={() => go(page)} style={{
+              display: "flex", alignItems: "center", gap: 8, padding: "12px 20px", borderRadius: 999,
+              border: "none", background: bg, color: "#1C1A3A", fontFamily: "'Quicksand', sans-serif",
+              fontWeight: 700, fontSize: 14, cursor: "pointer",
+            }}>
+              <Icon size={17} /> {label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <section style={{ padding: "60px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 34 }}>
+          <span style={{ fontSize: 12, letterSpacing: 2, color: "#E8B24D", fontWeight: 700 }}>CHOOSE YOUR PATH</span>
+          <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.5rem, 4vw, 2.2rem)", margin: "10px 0 0", color: "#F3EEE3" }}>
+            A Story for Every Mood
+          </h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 14 }}>
+          {CATEGORIES.map((cat) => (
+            <button key={cat.name} onClick={() => go("library")} className="wt-cat-card" style={{
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 16, padding: "20px 10px", textAlign: "center", cursor: "pointer", color: "#F3EEE3",
+            }}>
+              <div style={{ fontSize: 26, marginBottom: 6 }}>{cat.icon}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700 }}>{cat.name}</div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ padding: "60px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 34 }}>
+          <span style={{ fontSize: 12, letterSpacing: 2, color: "#E8B24D", fontWeight: 700 }}>THE WORLD MAP</span>
+          <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.5rem, 4vw, 2.2rem)", margin: "10px 0 0", color: "#F3EEE3" }}>
+            Three Kingdoms to Start
+          </h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+          {KINGDOMS_PREVIEW.map((k) => (
+            <div key={k.name} onClick={() => go("map")} className="wt-kingdom-card" style={{
+              borderRadius: 18, padding: "22px 20px", cursor: "pointer",
+              background: `linear-gradient(160deg, ${k.color}22, rgba(255,255,255,0.04))`,
+              border: `1px solid ${k.color}55`,
+            }}>
+              <div style={{ width: 9, height: 9, borderRadius: "50%", background: k.color, marginBottom: 12 }} />
+              <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 17, margin: "0 0 6px", color: "#F3EEE3" }}>{k.name}</h3>
+              <p style={{ fontSize: 13, opacity: 0.75, margin: 0, color: "#F3EEE3" }}>{k.blurb}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.1)", padding: "30px 24px", textAlign: "center", fontSize: 12.5, opacity: 0.6, color: "#F3EEE3" }}>
+        Safe by design · Accessible for every child · Available in many languages
+      </footer>
+    </div>
+  );
+}
+
+/* ============================== STORY READER ============================== */
+
+const PAGES = [
+  { text: "Deep in the Emerald Forest, where the moss glowed faintly blue at night, a small fox named Wisp found something she had never seen before — a door, standing all alone between two ancient trees.", vocab: [{ word: "ancient", def: "very, very old" }] },
+  { text: "The door had no wall around it. No house, no fence. Just a small wooden door with a brass handle shaped like a leaf, humming with a quiet, golden light.", vocab: [{ word: "quiet", def: "making very little sound" }] },
+  { text: "Wisp pressed her paw to the handle. It was warm — warmer than sunlight, warmer than her mother's fur. 'Curious things find curious doors,' whispered a voice from nowhere at all.", vocab: [{ word: "curious", def: "eager to learn or know something" }] },
+  { text: "She turned the handle. The door swung open not onto more forest, but onto a sky full of floating islands, each one carrying a single glowing tree. Wisp had found the Kingdom of Small Wonders.", vocab: [{ word: "floating", def: "resting or moving on top of something, without sinking" }] },
+];
+
+function StoryReaderPage({ go }) {
+  const [pageIndex, setPageIndex] = useState(0);
+  const [darkMode, setDarkMode] = useState(true);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [favorited, setFavorited] = useState(false);
+  const [toast, setToast] = useState("");
+
+  const page = PAGES[pageIndex];
+  const progress = ((pageIndex + 1) / PAGES.length) * 100;
+
+  const bg = darkMode ? "#191830" : "#FBF3E7";
+  const text = darkMode ? "#F3EEE3" : "#2B2440";
+  const cardBg = darkMode ? "rgba(255,255,255,0.05)" : "rgba(43,36,64,0.04)";
+  const border = darkMode ? "rgba(255,255,255,0.12)" : "rgba(43,36,64,0.12)";
+  const accent = "#E8B24D";
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2200);
+  };
+
+  const fullStoryText = `The Door in the Emerald Forest\n\n${PAGES.map((p) => p.text).join("\n\n")}`;
+
+  const handleDownload = () => {
+    try {
+      const blob = new Blob([fullStoryText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "The Door in the Emerald Forest.txt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Story downloaded!");
+    } catch (e) {
+      showToast("Download isn't available in this preview.");
+    }
+  };
+
+  const inIframe = typeof window !== "undefined" && window.self !== window.top;
+
+  const handlePrint = () => {
+    try {
+      window.print();
+      // Sandboxed preview iframes often silently no-op window.print() with no error thrown,
+      // so we can't reliably detect success — give feedback either way.
+      showToast(inIframe ? "Print may be blocked by this preview — try the downloaded file instead." : "Opening print dialog…");
+    } catch (e) {
+      showToast("Print isn't available here — try downloading the story instead.");
+    }
+  };
+
+  const copyToClipboardFallback = (text) => {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = { title: "The Door in the Emerald Forest", text: "Check out this WonderTale Kingdom story!" };
+    // 1. Try the native share sheet
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        showToast("Shared!");
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // user closed the share sheet on purpose
+        // otherwise fall through to clipboard fallback
+      }
+    }
+    // 2. Try the modern clipboard API
+    const text = `${shareData.title} — ${shareData.text}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Link copied to clipboard!");
+        return;
+      } catch (e) {
+        // often blocked inside sandboxed preview iframes — fall through
+      }
+    }
+    // 3. Legacy fallback that works in more restricted contexts
+    if (copyToClipboardFallback(text)) {
+      showToast("Copied to clipboard!");
+      return;
+    }
+    // 4. Nothing worked — be honest about it instead of failing silently
+    showToast(inIframe ? "Sharing is blocked inside this preview — it'll work in a real browser tab." : "Sharing isn't available in this browser.");
+  };
+
+  return (
+    <div style={{ background: bg, color: text, minHeight: "100%", transition: "background 0.4s ease, color 0.4s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderBottom: `1px solid ${border}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <BookOpen size={17} color={accent} />
+          <span style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.7 }}>Fairy Tales</span>
+        </div>
+        <button onClick={() => setDarkMode((d) => !d)} style={{
+          border: `1px solid ${border}`, background: cardBg, borderRadius: 999, padding: "7px 13px",
+          display: "flex", alignItems: "center", gap: 6, color: text, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+        }}>
+          {darkMode ? <Sun size={13} /> : <Moon size={13} />}
+          {darkMode ? "Light mode" : "Dark mode"}
+        </button>
+      </div>
+
+      <div style={{ height: 4, background: border }}>
+        <div style={{ height: "100%", width: `${progress}%`, background: accent, transition: "width 0.4s ease" }} />
+      </div>
+
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "36px 24px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 26 }}>
+          <span style={{ fontSize: 11.5, letterSpacing: 2, color: accent, fontWeight: 700 }}>A WONDERTALE ORIGINAL</span>
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.6rem, 5vw, 2.3rem)", margin: "10px 0 12px" }}>
+            The Door in the Emerald Forest
+          </h1>
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap", fontSize: 12.5, opacity: 0.75 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={13} /> 5 min read</span>
+            <span>Ages 5–8</span>
+            <span>Gentle · Level 2</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 28 }}>
+          {[
+            { icon: Bookmark, label: "Bookmark", active: bookmarked, onClick: () => setBookmarked((v) => !v) },
+            { icon: Heart, label: "Favorite", active: favorited, onClick: () => setFavorited((v) => !v) },
+            { icon: Download, label: "Download", onClick: handleDownload },
+            { icon: Printer, label: "Print", onClick: handlePrint },
+            { icon: Share2, label: "Share", onClick: handleShare },
+          ].map(({ icon: Icon, label, active, onClick }) => (
+            <button key={label} onClick={onClick} style={{
+              display: "flex", alignItems: "center", gap: 5, border: `1px solid ${active ? accent : border}`,
+              background: active ? `${accent}22` : cardBg, borderRadius: 999, padding: "7px 12px",
+              fontSize: 11.5, fontWeight: 600, color: active ? accent : text, cursor: "pointer",
+            }}>
+              <Icon size={13} fill={active ? accent : "none"} /> {label}
+            </button>
+          ))}
+        </div>
+
+        {inIframe && (
+          <p style={{ textAlign: "center", fontSize: 11, opacity: 0.5, marginTop: -14, marginBottom: 22 }}>
+            Print & Share may be limited inside this preview — Download always works, and everything else works once this is running in its own browser tab.
+          </p>
+        )}
+
+        <div key={pageIndex} style={{
+          background: cardBg, border: `1px solid ${border}`, borderRadius: 22, padding: "38px 30px",
+          minHeight: 200, position: "relative", animation: "wtFadeIn 0.4s ease",
+        }}>
+          <p style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1rem, 2.4vw, 1.2rem)", lineHeight: 1.85, margin: 0 }}>
+            {page.text.split(" ").map((word, i) => {
+              const clean = word.replace(/[.,']/g, "");
+              const match = page.vocab.find((v) => v.word.toLowerCase() === clean.toLowerCase());
+              return match ? (
+                <span key={i} title={match.def} style={{ textDecoration: "underline dotted rgba(232,178,77,0.7)", textUnderlineOffset: 4, cursor: "help" }}>{word} </span>
+              ) : word + " ";
+            })}
+          </p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 22 }}>
+          <button disabled={pageIndex === 0} onClick={() => setPageIndex((p) => Math.max(0, p - 1))} style={{
+            display: "flex", alignItems: "center", gap: 5, border: "none", background: "transparent",
+            color: text, fontWeight: 700, fontSize: 13.5, cursor: pageIndex === 0 ? "not-allowed" : "pointer",
+            opacity: pageIndex === 0 ? 0.35 : 1,
+          }}>
+            <ChevronLeft size={17} /> Back
+          </button>
+          <span style={{ fontSize: 12.5, opacity: 0.6 }}>Page {pageIndex + 1} of {PAGES.length}</span>
+          {pageIndex === PAGES.length - 1 ? (
+            <button onClick={() => go("listen")} style={{
+              display: "flex", alignItems: "center", gap: 5, border: "none", background: "transparent",
+              color: accent, fontWeight: 700, fontSize: 13.5, cursor: "pointer",
+            }}>
+              Finished <ChevronRight size={17} />
+            </button>
+          ) : (
+            <button onClick={() => setPageIndex((p) => Math.min(PAGES.length - 1, p + 1))} style={{
+              display: "flex", alignItems: "center", gap: 5, border: "none", background: "transparent",
+              color: accent, fontWeight: 700, fontSize: 13.5, cursor: "pointer",
+            }}>
+              Next <ChevronRight size={17} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          background: "#1C1A3A", color: "#F3EEE3", padding: "10px 20px", borderRadius: 999,
+          fontSize: 13, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,0.3)", zIndex: 400,
+          animation: "wtSlideUp 0.25s ease",
+        }}>
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================== LISTEN MODE ============================== */
+
+const NARRATION_TEXT = PAGES.map((p) => p.text).join(" ");
+const NARRATION_WORDS = NARRATION_TEXT.split(" ");
+const SPEEDS = [0.75, 1, 1.25];
+
+function ListenModePage() {
+  const [supported] = useState(() => typeof window !== "undefined" && "speechSynthesis" in window);
+  const [playing, setPlaying] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const [voices, setVoices] = useState([]);
+  const [voiceIndex, setVoiceIndex] = useState(0);
+  const [sleepMode, setSleepMode] = useState(false);
+
+  // Load available system voices (list can arrive async on some browsers)
+  useEffect(() => {
+    if (!supported) return;
+    const loadVoices = () => {
+      const all = window.speechSynthesis.getVoices();
+      const english = all.filter((v) => v.lang && v.lang.toLowerCase().startsWith("en"));
+      setVoices(english.length ? english.slice(0, 4) : all.slice(0, 4));
+    };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => { window.speechSynthesis.cancel(); };
+  }, [supported]);
+
+  const speakFrom = (startIndex, rate = speed, voiceOverride) => {
+    if (!supported) return;
+    window.speechSynthesis.cancel();
+    const text = NARRATION_WORDS.slice(startIndex).join(" ");
+    if (!text.trim()) { setPlaying(false); return; }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = rate;
+    const chosenVoice = voiceOverride !== undefined ? voiceOverride : voices[voiceIndex];
+    if (chosenVoice) utter.voice = chosenVoice;
+    utter.onboundary = (e) => {
+      if (typeof e.charIndex === "number") {
+        const consumed = text.slice(0, e.charIndex);
+        const offset = consumed.length ? consumed.trim().split(" ").length : 0;
+        setWordIndex(Math.min(NARRATION_WORDS.length - 1, startIndex + offset));
+      }
+    };
+    utter.onend = () => { setPlaying(false); setWordIndex(NARRATION_WORDS.length - 1); };
+    window.speechSynthesis.speak(utter);
+    setPlaying(true);
+  };
+
+  const togglePlay = () => {
+    if (!supported) return;
+    if (playing) {
+      window.speechSynthesis.cancel();
+      setPlaying(false);
+    } else {
+      speakFrom(wordIndex >= NARRATION_WORDS.length - 1 ? 0 : wordIndex);
+    }
+  };
+
+  const skip = (delta) => {
+    const next = Math.max(0, Math.min(NARRATION_WORDS.length - 1, wordIndex + delta));
+    setWordIndex(next);
+    if (playing) speakFrom(next);
+  };
+
+  const changeSpeed = (s) => {
+    setSpeed(s);
+    if (playing) speakFrom(wordIndex, s);
+  };
+
+  const changeVoice = (i) => {
+    setVoiceIndex(i);
+    if (playing) speakFrom(wordIndex, speed, voices[i]);
+  };
+
+  const progress = (wordIndex / Math.max(1, NARRATION_WORDS.length - 1)) * 100;
+  const estMinutesTotal = Math.max(1, Math.round((NARRATION_WORDS.length / 150) / speed));
+
+  return (
+    <div style={{
+      background: sleepMode ? "linear-gradient(180deg, #0A0918, #14132C)" : "radial-gradient(ellipse at 50% 0%, #3A2E68 0%, #14132C 55%, #0F0E24 100%)",
+      color: "#F3EEE3", minHeight: "100%", transition: "background 0.6s ease",
+    }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "44px 24px 60px", textAlign: "center" }}>
+        <span style={{ fontSize: 11.5, letterSpacing: 2, color: "#E8B24D", fontWeight: 700 }}>NOW LISTENING</span>
+        <div style={{ position: "relative", width: 200, height: 200, margin: "24px auto 26px", animation: playing ? "wtFloatDisc 4s ease-in-out infinite" : "none" }}>
+          <div style={{
+            width: "100%", height: "100%", borderRadius: "50%",
+            background: "linear-gradient(160deg, #E8B24D, #B49AE8 60%, #7EC8E3)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64,
+            boxShadow: "0 0 50px rgba(232,178,77,0.3)",
+            animation: playing ? "wtSpinSlow 12s linear infinite" : "none",
+          }}>🦊</div>
+        </div>
+        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.3rem, 4vw, 1.7rem)", margin: "0 0 6px" }}>The Door in the Emerald Forest</h1>
+        <p style={{ fontSize: 12.5, opacity: 0.6, marginBottom: 22 }}>
+          {supported ? `Read aloud by your device's voice` : "Text-to-speech isn't supported in this browser"}
+        </p>
+
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "14px 16px", marginBottom: 22, fontFamily: "'Fraunces', serif", fontSize: 14, lineHeight: 1.7, textAlign: "left", maxHeight: 180, overflowY: "auto" }}>
+          {NARRATION_WORDS.map((w, i) => (
+            <span key={i} style={{
+              color: i === wordIndex && playing ? "#1C1A3A" : "#F3EEE3",
+              background: i === wordIndex && playing ? "#E8B24D" : "transparent",
+              borderRadius: 4, padding: i === wordIndex && playing ? "1px 3px" : 0, transition: "all 0.15s ease",
+            }}>{w} </span>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#E8B24D,#F4C9E0)", transition: "width 0.2s linear" }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, opacity: 0.55, marginTop: 6 }}>
+            <span>{Math.round(progress)}%</span><span>~{estMinutesTotal} min total</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, marginBottom: 26 }}>
+          <button disabled={!supported} style={{ background: "none", border: "none", color: "#F3EEE3", cursor: supported ? "pointer" : "not-allowed", opacity: supported ? 1 : 0.4 }} onClick={() => skip(-12)}><SkipBack size={20} /></button>
+          <button
+            disabled={!supported}
+            onClick={togglePlay}
+            style={{
+              width: 54, height: 54, borderRadius: "50%", border: "none", background: "#E8B24D",
+              display: "flex", alignItems: "center", justifyContent: "center", color: "#1C1A3A",
+              cursor: supported ? "pointer" : "not-allowed", opacity: supported ? 1 : 0.5,
+            }}
+          >
+            {playing ? <Pause size={22} fill="#1C1A3A" /> : <Play size={22} fill="#1C1A3A" style={{ marginLeft: 3 }} />}
+          </button>
+          <button disabled={!supported} style={{ background: "none", border: "none", color: "#F3EEE3", cursor: supported ? "pointer" : "not-allowed", opacity: supported ? 1 : 0.4 }} onClick={() => skip(12)}><SkipForward size={20} /></button>
+        </div>
+
+        {!supported && (
+          <div style={{ background: "rgba(226,155,107,0.15)", border: "1px solid rgba(226,155,107,0.4)", borderRadius: 14, padding: "12px 14px", fontSize: 12.5, marginBottom: 20, textAlign: "left" }}>
+            This browser doesn't expose the Web Speech API. Try Chrome, Edge, or Safari for real narration.
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.7 }}><Mic2 size={12} /> Voice</span>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              {(voices.length ? voices : [{ name: "Default" }]).map((v, i) => (
+                <button key={v.name + i} disabled={!supported} onClick={() => changeVoice(i)} style={{
+                  fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 999,
+                  border: `1px solid ${voiceIndex === i ? "#E8B24D" : "rgba(255,255,255,0.15)"}`,
+                  background: voiceIndex === i ? "rgba(232,178,77,0.18)" : "transparent", color: "#F3EEE3",
+                  cursor: supported ? "pointer" : "not-allowed", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{v.name}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.7 }}><Gauge size={12} /> Speed</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              {SPEEDS.map((s) => (
+                <button key={s} disabled={!supported} onClick={() => changeSpeed(s)} style={{
+                  fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 999,
+                  border: `1px solid ${speed === s ? "#E8B24D" : "rgba(255,255,255,0.15)"}`,
+                  background: speed === s ? "rgba(232,178,77,0.18)" : "transparent", color: "#F3EEE3", cursor: supported ? "pointer" : "not-allowed",
+                }}>{s}×</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, opacity: 0.7 }}><Moon size={12} /> Sleep mode</span>
+            <div onClick={() => setSleepMode((v) => !v)} style={{
+              width: 36, height: 20, borderRadius: 999, background: sleepMode ? "#E8B24D" : "rgba(255,255,255,0.2)", padding: 3, cursor: "pointer",
+            }}>
+              <div style={{ width: 14, height: 14, borderRadius: "50%", background: "white", transform: sleepMode ? "translateX(16px)" : "translateX(0)", transition: "transform 0.2s ease" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== WATCH MODE ============================== */
+
+const QUIZ = { question: "What did Wisp find between the two ancient trees?", options: ["A treasure chest", "A small door", "A sleeping dragon"], answer: 1 };
+const CAPTION_LINE = "The moon remembers every flower that ever bloomed for her.";
+
+function WatchModePage({ go }) {
+  const [supported] = useState(() => typeof window !== "undefined" && "speechSynthesis" in window);
+  const [playing, setPlaying] = useState(true);
+  const [captions, setCaptions] = useState(true);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [picked, setPicked] = useState(null);
+  const [gemsFound, setGemsFound] = useState(0);
+  const playingRef = useRef(playing);
+
+  useEffect(() => { playingRef.current = playing; }, [playing]);
+
+  const speakCaption = () => {
+    if (!supported) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(CAPTION_LINE);
+    utter.rate = 0.95;
+    utter.onend = () => {
+      // loop the line gently while the "scene" is still playing, like ambient narration
+      if (playingRef.current) setTimeout(() => { if (playingRef.current) speakCaption(); }, 600);
+    };
+    window.speechSynthesis.speak(utter);
+  };
+
+  useEffect(() => {
+    if (!supported) return;
+    if (playing) speakCaption();
+    else window.speechSynthesis.cancel();
+    return () => window.speechSynthesis.cancel();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, supported]);
+
+  return (
+    <div style={{ background: "#0F0E24", color: "#F3EEE3", minHeight: "100%" }}>
+      <div style={{ maxWidth: 780, margin: "0 auto", padding: "36px 24px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 22 }}>
+          <span style={{ fontSize: 11.5, letterSpacing: 2, color: "#E8B24D", fontWeight: 700 }}>NOW WATCHING</span>
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.5rem, 4.5vw, 2.1rem)", margin: "8px 0 6px" }}>
+            Petals for the Moon Queen
+          </h1>
+          <p style={{ fontSize: 12.5, opacity: 0.65 }}>An animated adventure · 7 min · Ages 6–8</p>
+        </div>
+
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            aspectRatio: "16 / 9",
+            borderRadius: 22,
+            overflow: "hidden",
+            background: "radial-gradient(ellipse at 60% 30%, #4B3B7C, #1C1A3A 70%)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "clamp(50px, 12vw, 90px)" }}>
+            🌙👑🌸
+          </div>
+
+          <button
+            onClick={() => setGemsFound((g) => Math.min(3, g + 1))}
+            style={{
+              position: "absolute", top: "22%", left: "18%", background: "none", border: "none",
+              fontSize: 26, cursor: "pointer", filter: "drop-shadow(0 0 8px rgba(232,178,77,0.7))",
+              animation: "wtTwinkle 2s ease-in-out infinite",
+            }}
+            title="Hidden gem!"
+          >
+            💎
+          </button>
+
+          {captions && (
+            <div style={{ position: "absolute", bottom: 54, left: 0, right: 0, textAlign: "center" }}>
+              <span style={{ background: "rgba(0,0,0,0.55)", padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
+                "The moon remembers every flower that ever bloomed for her."
+              </span>
+            </div>
+          )}
+
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 16px", background: "linear-gradient(0deg, rgba(0,0,0,0.55), transparent)", display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => setPlaying((p) => !p)} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer" }}>
+              {playing ? <Pause size={18} fill="#fff" /> : <Play size={18} fill="#fff" />}
+            </button>
+            <div style={{ flex: 1, height: 4, borderRadius: 999, background: "rgba(255,255,255,0.25)" }}>
+              <div style={{ width: "38%", height: "100%", background: "#E8B24D", borderRadius: 999 }} />
+            </div>
+            <button onClick={() => setCaptions((c) => !c)} style={{ background: "none", border: "none", color: captions ? "#E8B24D" : "#fff", cursor: "pointer" }}>
+              <Captions size={17} />
+            </button>
+          </div>
+        </div>
+
+        {!supported && (
+          <div style={{ background: "rgba(226,155,107,0.15)", border: "1px solid rgba(226,155,107,0.4)", borderRadius: 14, padding: "10px 14px", fontSize: 12, marginBottom: 16 }}>
+            This browser doesn't support spoken narration — captions will still work.
+          </div>
+        )}
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 22 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, opacity: 0.8 }}>
+            <Gem size={14} color="#E8B24D" /> {gemsFound} of 3 hidden gems found this watch
+          </div>
+          <button
+            onClick={() => setShowQuiz(true)}
+            style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(232,178,77,0.4)", background: "rgba(232,178,77,0.12)", color: "#E8B24D", fontWeight: 700, fontSize: 12.5, padding: "8px 14px", borderRadius: 999, cursor: "pointer" }}
+          >
+            <HelpCircle size={14} /> Take the Ending Quiz
+          </button>
+        </div>
+
+        <div style={{ marginBottom: 10, fontSize: 13, fontWeight: 700, opacity: 0.85 }}>Meet the Cast</div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {[{ icon: "👑", name: "The Moon Queen" }, { icon: "🌸", name: "Petal" }, { icon: "🦉", name: "Sage the Owl" }].map((c) => (
+            <div key={c.name} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 999, padding: "7px 13px" }}>
+              <span style={{ fontSize: 17 }}>{c.icon}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>{c.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {showQuiz && (
+        <div onClick={() => { setShowQuiz(false); setPicked(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#1C1A3A", borderRadius: 22, padding: "28px 26px", maxWidth: 420, width: "100%", border: "1px solid rgba(255,255,255,0.12)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <Trophy size={16} color="#E8B24D" />
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: "#E8B24D" }}>ENDING QUIZ</span>
+            </div>
+            <p style={{ fontFamily: "'Fraunces', serif", fontSize: 16, lineHeight: 1.6, marginBottom: 18 }}>{QUIZ.question}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 18 }}>
+              {QUIZ.options.map((opt, i) => {
+                const isPicked = picked === i;
+                const isCorrect = i === QUIZ.answer;
+                const showResult = picked !== null;
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => setPicked(i)}
+                    disabled={showResult}
+                    style={{
+                      textAlign: "left", padding: "12px 14px", borderRadius: 12, fontSize: 13.5, fontWeight: 600, cursor: showResult ? "default" : "pointer",
+                      border: `1px solid ${showResult && isCorrect ? "#8FD3C8" : showResult && isPicked ? "#E29B6B" : "rgba(255,255,255,0.15)"}`,
+                      background: showResult && isCorrect ? "rgba(143,211,200,0.15)" : showResult && isPicked ? "rgba(226,155,107,0.15)" : "rgba(255,255,255,0.04)",
+                      color: "#F3EEE3",
+                    }}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+            {picked !== null && (
+              <p style={{ fontSize: 12.5, opacity: 0.75, marginBottom: 16 }}>
+                {picked === QUIZ.answer ? "Exactly right — great listening!" : `Close! It was actually: "${QUIZ.options[QUIZ.answer]}"`}
+              </p>
+            )}
+            <button
+              onClick={() => { setShowQuiz(false); setPicked(null); go && go("library"); }}
+              style={{ border: "none", background: "#E8B24D", color: "#1C1A3A", fontWeight: 700, fontSize: 13, padding: "10px 18px", borderRadius: 999, cursor: "pointer" }}
+            >
+              Find More Stories
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================== LIBRARY ============================== */
+
+const AGES = ["All Ages", "3-5", "6-8", "9-12"];
+const THEMES = ["All Themes", "Fantasy", "Ocean", "Space", "Friendship", "Bedtime", "Dinosaurs"];
+const EMOTIONS = ["Any Mood", "Cozy", "Brave", "Curious", "Silly", "Calm"];
+
+const BOOKS = [
+  { title: "The Door in the Emerald Forest", age: "6-8", theme: "Fantasy", emotion: "Curious", mins: 5, mode: "read", color: "#8FD3C8" },
+  { title: "The Owl Who Lost Her Song", age: "3-5", theme: "Friendship", emotion: "Cozy", mins: 4, mode: "listen", color: "#F4C9E0" },
+  { title: "Petals for the Moon Queen", age: "6-8", theme: "Fantasy", emotion: "Calm", mins: 7, mode: "watch", color: "#B49AE8" },
+  { title: "The Smallest Dragon", age: "3-5", theme: "Fantasy", emotion: "Brave", mins: 6, mode: "read", color: "#E8B24D" },
+  { title: "Tide Pool Tales", age: "6-8", theme: "Ocean", emotion: "Curious", mins: 5, mode: "listen", color: "#7EC8E3" },
+  { title: "Comet's First Sleepover", age: "9-12", theme: "Space", emotion: "Silly", mins: 8, mode: "read", color: "#F4C9E0" },
+  { title: "Bedtime for a Baby Dino", age: "3-5", theme: "Dinosaurs", emotion: "Cozy", mins: 3, mode: "watch", color: "#8FD3C8" },
+  { title: "The Kindest Knight", age: "6-8", theme: "Friendship", emotion: "Brave", mins: 6, mode: "read", color: "#E8B24D" },
+  { title: "Whisper Under the Stars", age: "9-12", theme: "Bedtime", emotion: "Calm", mins: 9, mode: "listen", color: "#B49AE8" },
+];
+
+const modeIcon = { read: BookOpen, listen: Headphones, watch: Film };
+
+function Pill({ label, active, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: "6px 13px", borderRadius: 999, fontSize: 12.5, fontWeight: 600,
+      border: `1px solid ${active ? "#E8B24D" : "rgba(255,255,255,0.15)"}`,
+      background: active ? "#E8B24D" : "rgba(255,255,255,0.05)", color: active ? "#1C1A3A" : "#F3EEE3",
+      cursor: "pointer", whiteSpace: "nowrap",
+    }}>{label}</button>
+  );
+}
+
+function MagicalLibraryPage({ go }) {
+  const [query, setQuery] = useState("");
+  const [age, setAge] = useState("All Ages");
+  const [theme, setTheme] = useState("All Themes");
+  const [emotion, setEmotion] = useState("Any Mood");
+
+  const filtered = useMemo(() => BOOKS.filter((b) =>
+    b.title.toLowerCase().includes(query.toLowerCase()) &&
+    (age === "All Ages" || b.age === age) &&
+    (theme === "All Themes" || b.theme === theme) &&
+    (emotion === "Any Mood" || b.emotion === emotion)
+  ), [query, age, theme, emotion]);
+
+  const filtersActive = age !== "All Ages" || theme !== "All Themes" || emotion !== "Any Mood" || query !== "";
+
+  return (
+    <div style={{ background: "#14132C", color: "#F3EEE3", minHeight: "100%" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 30 }}>
+          <span style={{ fontSize: 11.5, letterSpacing: 2, color: "#E8B24D", fontWeight: 700 }}>THE MAGICAL LIBRARY</span>
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.6rem, 5vw, 2.3rem)", margin: "10px 0 10px" }}>Shelves That Never End</h1>
+          <p style={{ opacity: 0.7, maxWidth: 440, margin: "0 auto", fontSize: 13.5 }}>🦉 "Tell me the mood, and I'll find the book," says the librarian owl.</p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 999, padding: "12px 18px", maxWidth: 500, margin: "0 auto 20px" }}>
+          <Search size={16} style={{ opacity: 0.6, flexShrink: 0 }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by title…" style={{ background: "transparent", border: "none", color: "#F3EEE3", fontSize: 13.5, width: "100%", outline: "none" }} />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", marginBottom: 36 }}>
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "center" }}>{AGES.map((a) => <Pill key={a} label={a} active={age === a} onClick={() => setAge(a)} />)}</div>
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "center" }}>{THEMES.map((t) => <Pill key={t} label={t} active={theme === t} onClick={() => setTheme(t)} />)}</div>
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "center" }}>{EMOTIONS.map((e) => <Pill key={e} label={e} active={emotion === e} onClick={() => setEmotion(e)} />)}</div>
+          {filtersActive && (
+            <button onClick={() => { setQuery(""); setAge("All Ages"); setTheme("All Themes"); setEmotion("Any Mood"); }} style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", color: "#F4C9E0", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 2 }}>
+              <X size={12} /> Clear all filters
+            </button>
+          )}
+        </div>
+
+        <div style={{ fontSize: 12.5, opacity: 0.6, marginBottom: 14 }}>{filtered.length} {filtered.length === 1 ? "story" : "stories"} found</div>
+
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "50px 20px", opacity: 0.7, border: "1px dashed rgba(255,255,255,0.2)", borderRadius: 18 }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🔮</div>No stories match yet — try a different mood or theme.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "28px 16px" }}>
+            {filtered.map((b) => {
+              const Icon = modeIcon[b.mode];
+              const dest = b.mode === "watch" ? "watch" : b.mode === "listen" ? "listen" : "reader";
+              return (
+                <div key={b.title} onClick={() => go(dest)} style={{ cursor: "pointer" }}>
+                  <div style={{
+                    background: `linear-gradient(160deg, ${b.color}33, rgba(255,255,255,0.04))`,
+                    border: `1px solid ${b.color}55`, borderRadius: "10px 10px 16px 16px", padding: "20px 15px",
+                    minHeight: 140, display: "flex", flexDirection: "column", justifyContent: "space-between",
+                  }}>
+                    <div>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: b.color, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+                        <Icon size={14} color="#1C1A3A" />
+                      </div>
+                      <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 14.5, margin: 0, lineHeight: 1.35 }}>{b.title}</h3>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, fontSize: 11, opacity: 0.75 }}>
+                      <span>{b.theme} · {b.age}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={10} /> {b.mins}m</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 9, background: "linear-gradient(180deg, rgba(232,178,77,0.5), transparent)", borderRadius: 3, marginTop: -6 }} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================== WORLD MAP ============================== */
+
+const KINGDOMS = [
+  { id: 1, name: "Dragon Mountain", x: 18, y: 22, color: "#E8B24D", unlocked: true, stories: 12, blurb: "Where the sky belongs to wings of fire, and every peak hides a nest of tales." },
+  { id: 2, name: "Crystal Cave", x: 32, y: 52, color: "#8FD3C8", unlocked: true, stories: 8, blurb: "Echoes turn to light with every step you take deeper into the glow." },
+  { id: 3, name: "Candy Kingdom", x: 50, y: 20, color: "#F4C9E0", unlocked: true, stories: 15, blurb: "A realm built from spun sugar, gumdrop rivers, and songs you can taste." },
+  { id: 4, name: "Mermaid Ocean", x: 68, y: 46, color: "#7EC8E3", unlocked: true, stories: 10, blurb: "Tides that remember every wish thrown in, and every name whispered to the waves." },
+  { id: 5, name: "Wizard Academy", x: 45, y: 68, color: "#B49AE8", unlocked: false, stories: 6, blurb: "Where first spells are still a little wobbly, and the library never sleeps." },
+  { id: 6, name: "Sky Kingdom", x: 78, y: 20, color: "#F7DDA0", unlocked: false, stories: 9, blurb: "Clouds thick enough to build a home on, floating just past the rainbow's end." },
+  { id: 7, name: "Ice Palace", x: 20, y: 74, color: "#BEE3F8", unlocked: false, stories: 7, blurb: "Frost that sparkles like stardust, guarding secrets older than winter." },
+  { id: 8, name: "Pirate Bay", x: 62, y: 78, color: "#E29B6B", unlocked: false, stories: 11, blurb: "Salt air, buried maps, and a captain who's more bark than bite." },
+];
+
+function WorldMapPage({ go }) {
+  const [selected, setSelected] = useState(null);
+  const [hovered, setHovered] = useState(null);
+  const unlockedCount = KINGDOMS.filter((k) => k.unlocked).length;
+
+  return (
+    <div style={{ background: "#0F0E24", color: "#F3EEE3", minHeight: "100%" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 24px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <span style={{ fontSize: 11.5, letterSpacing: 2, color: "#E8B24D", fontWeight: 700 }}>THE WORLD MAP</span>
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.6rem, 4.5vw, 2.3rem)", margin: "10px 0 10px" }}>Choose Where the Story Takes You</h1>
+          <p style={{ opacity: 0.7, fontSize: 13 }}>{unlockedCount} of {KINGDOMS.length} kingdoms unlocked · Tap a pin to peek inside</p>
+        </div>
+
+        <div style={{
+          position: "relative", width: "100%", aspectRatio: "16 / 10", borderRadius: 24, overflow: "hidden",
+          background: "radial-gradient(circle at 20% 20%, #2E2A5C, transparent 55%), radial-gradient(circle at 75% 65%, #1F4B3F, transparent 50%), linear-gradient(160deg, #191830, #10101F)",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}>
+          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+            {KINGDOMS.filter((k) => k.unlocked).map((k, i, arr) => {
+              if (i === 0) return null;
+              const prev = arr[i - 1];
+              return <line key={k.id} x1={`${prev.x}%`} y1={`${prev.y}%`} x2={`${k.x}%`} y2={`${k.y}%`} stroke="rgba(232,178,77,0.35)" strokeWidth="2" strokeDasharray="5,6" />;
+            })}
+          </svg>
+          {KINGDOMS.map((k) => (
+            <div key={k.id} style={{ position: "absolute", left: `${k.x}%`, top: `${k.y}%`, transform: "translate(-50%, -50%)" }}>
+              {k.unlocked && <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `2px solid ${k.color}`, animation: "wtPulseRing 2.4s ease-out infinite" }} />}
+              <button onClick={() => setSelected(k)} onMouseEnter={() => setHovered(k.id)} onMouseLeave={() => setHovered(null)} style={{
+                width: 32, height: 32, borderRadius: "50%", border: "none",
+                background: k.unlocked ? k.color : "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: k.unlocked ? `0 0 16px 2px ${k.color}88` : "none", cursor: "pointer",
+              }}>
+                {k.unlocked ? <MapPin size={15} color="#1C1A3A" fill="#1C1A3A" /> : <Lock size={12} color="rgba(255,255,255,0.6)" />}
+              </button>
+              {hovered === k.id && (
+                <div style={{ position: "absolute", top: -32, left: "50%", transform: "translateX(-50%)", background: "#1C1A3A", padding: "4px 9px", borderRadius: 8, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", border: "1px solid rgba(255,255,255,0.15)" }}>{k.name}</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginTop: 20 }}>
+          {KINGDOMS.map((k) => (
+            <button key={k.id} onClick={() => setSelected(k)} style={{
+              display: "flex", alignItems: "center", gap: 7, textAlign: "left",
+              border: `1px solid ${k.unlocked ? k.color + "55" : "rgba(255,255,255,0.1)"}`,
+              background: k.unlocked ? `${k.color}18` : "rgba(255,255,255,0.03)", borderRadius: 12, padding: "9px 11px",
+              cursor: "pointer", color: "#F3EEE3",
+            }}>
+              {k.unlocked ? <MapPin size={13} color={k.color} /> : <Lock size={12} color="rgba(255,255,255,0.4)" />}
+              <span style={{ fontSize: 12, fontWeight: 600, opacity: k.unlocked ? 1 : 0.5 }}>{k.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {selected && (
+        <div onClick={() => setSelected(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 300 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 460, background: "#1C1A3A", borderRadius: "22px 22px 0 0", padding: "26px 24px 32px", animation: "wtSlideUp 0.3s ease", border: "1px solid rgba(255,255,255,0.1)", borderBottom: "none" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <div style={{ width: 38, height: 38, borderRadius: "50%", background: selected.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {selected.unlocked ? <MapPin size={17} color="#1C1A3A" /> : <Lock size={15} color="#1C1A3A" />}
+                </div>
+                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 19, margin: 0 }}>{selected.name}</h2>
+              </div>
+              <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", color: "#F3EEE3", opacity: 0.6, cursor: "pointer" }}><X size={19} /></button>
+            </div>
+            <p style={{ fontSize: 13.5, lineHeight: 1.6, opacity: 0.85, marginBottom: 16 }}>{selected.blurb}</p>
+            {selected.unlocked ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, opacity: 0.7 }}><BookOpen size={13} /> {selected.stories} stories waiting</span>
+                <button onClick={() => go("library")} style={{ border: "none", background: selected.color, color: "#1C1A3A", fontWeight: 700, fontSize: 13, padding: "9px 18px", borderRadius: 999, cursor: "pointer" }}>Enter Kingdom</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.06)", borderRadius: 13, padding: "11px 13px", fontSize: 12.5 }}>
+                <Sparkles size={13} color="#E8B24D" /> Finish 3 more stories nearby to unlock this kingdom.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================== INTERACTIVE ADVENTURE ============================== */
+
+const STORY = {
+  start: { text: "You stand at the edge of the Whispering Cave, moonlight spilling over the mossy stones. A soft light flickers deep inside, and somewhere above, a fairy circles, waiting to see what you'll do.", scene: "🕳️", choices: [{ label: "Enter the cave", next: "cave", gem: false }, { label: "Follow the fairy", next: "fairy", gem: true }] },
+  cave: { text: "Inside, the walls glimmer with tiny crystals. A narrow path splits in two — one leads down toward a warm, golden hum, the other winds upward toward cool starlight.", scene: "💎", choices: [{ label: "Follow the golden hum", next: "goldenEnd", gem: true }, { label: "Climb toward starlight", next: "starEnd", gem: false }] },
+  fairy: { text: "The fairy leads you over a silver stream to a ring of mushrooms glowing like tiny lanterns. 'Sit,' she says, 'and I'll show you something only kind hearts get to see.'", scene: "🍄", choices: [{ label: "Sit and listen", next: "kindEnd", gem: true }, { label: "Ask to see the cave instead", next: "cave", gem: false }] },
+  goldenEnd: { text: "The hum leads you to a sleeping baby dragon, curled around a pile of warm, glowing stones. It opens one eye, yawns, and offers you a stone of your very own. You've made a friend for life.", scene: "🐉", ending: "The Dragon's Gift", final: true },
+  starEnd: { text: "You climb until the cave opens to the night sky, stars close enough to touch. You realize the 'cave' was never underground at all — it was a doorway to the top of the world.", scene: "🌌", ending: "The Doorway to Stars", final: true },
+  kindEnd: { text: "The fairy shows you a memory: the forest, long ago, before it could speak. 'It remembers kindness best,' she whispers. You leave with a story no one else in the kingdom has ever heard.", scene: "🧚", ending: "The Forest's Memory", final: true },
+};
+
+function InteractiveAdventurePage() {
+  const [nodeId, setNodeId] = useState("start");
+  const [gems, setGems] = useState(0);
+  const [path, setPath] = useState(["start"]);
+  const node = STORY[nodeId];
+
+  const choose = (choice) => {
+    if (choice.gem) setGems((g) => g + 1);
+    setNodeId(choice.next);
+    setPath((p) => [...p, choice.next]);
+  };
+
+  const restart = () => { setNodeId("start"); setGems(0); setPath(["start"]); };
+
+  return (
+    <div style={{ background: "radial-gradient(ellipse at 50% 0%, #2E2A5C 0%, #14132C 55%, #0F0E24 100%)", color: "#F3EEE3", minHeight: "100%" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "40px 24px 80px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 26 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {path.map((_, i) => <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: i === path.length - 1 ? "#E8B24D" : "rgba(255,255,255,0.25)" }} />)}
+          </div>
+          <div key={gems} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(232,178,77,0.15)", border: "1px solid rgba(232,178,77,0.4)", borderRadius: 999, padding: "5px 11px", fontSize: 12.5, fontWeight: 700, color: "#E8B24D" }}>
+            <Gem size={13} /> {gems}
+          </div>
+        </div>
+
+        <div key={nodeId + "s"} style={{ textAlign: "center", fontSize: 64, marginBottom: 20, filter: "drop-shadow(0 0 26px rgba(232,178,77,0.3))", animation: "wtFadeScene 0.4s ease" }}>{node.scene}</div>
+
+        <div key={nodeId + "t"} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 22, padding: "26px 24px", marginBottom: 22, animation: "wtFadeIn 0.45s ease" }}>
+          {node.final && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <Sparkles size={13} color="#E8B24D" />
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#E8B24D" }}>ENDING: {node.ending.toUpperCase()}</span>
+            </div>
+          )}
+          <p style={{ fontFamily: "'Fraunces', serif", fontSize: 16, lineHeight: 1.75, margin: 0 }}>{node.text}</p>
+        </div>
+
+        {!node.final ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {node.choices.map((c) => (
+              <button key={c.label} onClick={() => choose(c)} style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "14px 18px", color: "#F3EEE3",
+                fontSize: 14, fontWeight: 600, cursor: "pointer", textAlign: "left",
+              }}>
+                {c.label} <ChevronRight size={15} style={{ opacity: 0.5, flexShrink: 0 }} />
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 12.5, opacity: 0.6, marginBottom: 14 }}>You collected {gems} magic {gems === 1 ? "gem" : "gems"} on this path. Try again for a different ending?</p>
+            <button onClick={restart} style={{ display: "inline-flex", alignItems: "center", gap: 7, border: "none", background: "#E8B24D", color: "#1C1A3A", fontWeight: 700, fontSize: 13.5, padding: "11px 22px", borderRadius: 999, cursor: "pointer" }}>
+              <RotateCcw size={14} /> Start a New Path
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================== AI STORY GENERATOR ============================== */
+
+const CHARACTERS_GEN = [{ name: "A brave fox", icon: "🦊" }, { name: "A curious dragon", icon: "🐉" }, { name: "A kind witch", icon: "🧙" }, { name: "A talking star", icon: "⭐" }];
+const THEMES_GEN = [{ name: "Friendship", icon: "🤝" }, { name: "Courage", icon: "🛡️" }, { name: "Discovery", icon: "🔍" }, { name: "Kindness", icon: "💛" }];
+const LOCATIONS_GEN = [{ name: "Enchanted Forest", icon: "🌳" }, { name: "Under the Sea", icon: "🌊" }, { name: "Cloud Castle", icon: "☁️" }, { name: "Starlit Desert", icon: "🏜️" }];
+const LENGTHS = ["Short (3 min)", "Medium (6 min)", "Long (10 min)"];
+
+function OptionGrid({ options, selected, onSelect }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(125px, 1fr))", gap: 9 }}>
+      {options.map((opt) => {
+        const active = selected === opt.name;
+        return (
+          <button key={opt.name} onClick={() => onSelect(opt.name)} style={{
+            display: "flex", alignItems: "center", gap: 7, padding: "11px 13px", borderRadius: 13,
+            border: `1px solid ${active ? "#E8B24D" : "rgba(255,255,255,0.14)"}`,
+            background: active ? "rgba(232,178,77,0.16)" : "rgba(255,255,255,0.04)", color: "#F3EEE3",
+            fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left",
+          }}>
+            <span style={{ fontSize: 17 }}>{opt.icon}</span>{opt.name}
+            {active && <Check size={12} color="#E8B24D" style={{ marginLeft: "auto" }} />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function AIStoryGeneratorPage({ go }) {
+  const [character, setCharacter] = useState("A brave fox");
+  const [theme, setTheme] = useState("Courage");
+  const [location, setLocation] = useState("Enchanted Forest");
+  const [length, setLength] = useState(LENGTHS[0]);
+  const [status, setStatus] = useState("idle");
+
+  const handleGenerate = () => { setStatus("generating"); setTimeout(() => setStatus("done"), 1600); };
+
+  return (
+    <div style={{ background: "radial-gradient(ellipse at 50% 0%, #3A2E68 0%, #14132C 55%, #0F0E24 100%)", color: "#F3EEE3", minHeight: "100%" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "44px 24px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 30 }}>
+          <Wand2 size={24} color="#E8B24D" style={{ marginBottom: 8 }} />
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.5rem, 4.5vw, 2.2rem)", margin: "0 0 8px" }}>Spin a Story of Your Own</h1>
+          <p style={{ opacity: 0.7, fontSize: 13.5, maxWidth: 420, margin: "0 auto" }}>Pick a hero, a feeling, and a place. The kingdom's storyteller will weave the rest.</p>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <div><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 9, opacity: 0.85 }}>1. Choose your character</div><OptionGrid options={CHARACTERS_GEN} selected={character} onSelect={setCharacter} /></div>
+          <div><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 9, opacity: 0.85 }}>2. Choose the heart of the story</div><OptionGrid options={THEMES_GEN} selected={theme} onSelect={setTheme} /></div>
+          <div><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 9, opacity: 0.85 }}>3. Choose where it happens</div><OptionGrid options={LOCATIONS_GEN} selected={location} onSelect={setLocation} /></div>
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 9, opacity: 0.85 }}>4. Choose the length</div>
+            <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+              {LENGTHS.map((l) => (
+                <button key={l} onClick={() => setLength(l)} style={{
+                  padding: "8px 15px", borderRadius: 999, border: `1px solid ${length === l ? "#E8B24D" : "rgba(255,255,255,0.15)"}`,
+                  background: length === l ? "#E8B24D" : "rgba(255,255,255,0.05)", color: length === l ? "#1C1A3A" : "#F3EEE3",
+                  fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+                }}>{l}</button>
+              ))}
+            </div>
+          </div>
+
+          <button disabled={status === "generating"} onClick={handleGenerate} style={{
+            marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none",
+            borderRadius: 999, padding: "14px 26px", background: "linear-gradient(135deg, #E8B24D, #F4C9E0)",
+            color: "#1C1A3A", fontWeight: 700, fontSize: 15, cursor: status === "generating" ? "wait" : "pointer",
+            opacity: status === "generating" ? 0.7 : 1,
+          }}>
+            {status === "generating" ? (<><RefreshCw size={17} style={{ animation: "wtSpin 1s linear infinite" }} /> Weaving your story…</>) : (<><Sparkles size={17} /> Create My Story</>)}
+          </button>
+
+          {status === "done" && (
+            <div style={{ marginTop: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(232,178,77,0.4)", borderRadius: 20, padding: "24px 22px", animation: "wtSparklePop 0.4s ease" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 9 }}>
+                <Sparkles size={14} color="#E8B24D" />
+                <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 1, color: "#E8B24D" }}>YOUR STORY IS READY</span>
+              </div>
+              <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 19, margin: "0 0 10px" }}>
+                {character.split(" ").slice(-1)[0].charAt(0).toUpperCase() + character.split(" ").slice(-1)[0].slice(1)} and the {theme} of the {location}
+              </h3>
+              <p style={{ fontSize: 13.5, lineHeight: 1.7, opacity: 0.85, margin: "0 0 18px" }}>
+                {character} had never felt {theme.toLowerCase() === "courage" ? "quite brave enough" : "quite ready"} — until the {location.toLowerCase()} called with a secret only they could uncover. What began as a quiet wander became the beginning of something the whole kingdom would remember...
+              </p>
+              <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+                <button onClick={() => go("reader")} style={{ display: "flex", alignItems: "center", gap: 6, border: "none", background: "#E8B24D", color: "#1C1A3A", fontWeight: 700, fontSize: 12.5, padding: "9px 17px", borderRadius: 999, cursor: "pointer" }}><BookOpen size={13} /> Read Full Story</button>
+                <button onClick={() => go("listen")} style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "#F3EEE3", fontWeight: 700, fontSize: 12.5, padding: "9px 17px", borderRadius: 999, cursor: "pointer" }}><Headphones size={13} /> Listen Instead</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== AI CHARACTER CHAT ============================== */
+
+const CHAT_CHARACTERS = [
+  { name: "Ember the Dragon", icon: "🐉", color: "#E8B24D", greeting: "Rawr— I mean, hello! I'm Ember. I collect shiny pebbles and bad jokes. Want to hear one?" },
+  { name: "Willow the Witch", icon: "🧙", color: "#B49AE8", greeting: "Oh, a visitor! I was just brewing something that smells like blueberries. What's your name, friend?" },
+  { name: "Finn the Fox", icon: "🦊", color: "#F4C9E0", greeting: "Psst! I know a shortcut through the forest. But first — tell me something that made you smile today!" },
+  { name: "Captain Pebble", icon: "🏴‍☠️", color: "#7EC8E3", greeting: "Ahoy! I'm searching for treasure, but honestly the real treasure is good company. Care to join my crew?" },
+];
+const SAFE_REPLIES = ["That's such a wonderful thing to imagine! Tell me more about it.", "Ha! You always know how to make this adventure more fun.", "Ooh, I like the way you think. What do you suppose happens next?", "That reminds me of a story my grandmother dragon used to tell!", "You're braver than half the knights I've met, you know that?"];
+
+function AICharacterChatPage() {
+  const [activeChar, setActiveChar] = useState(CHAT_CHARACTERS[0]);
+  const [messages, setMessages] = useState([{ from: "char", text: CHAT_CHARACTERS[0].greeting }]);
+  const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const scrollRef = useRef(null);
+
+  useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages, typing]);
+
+  const switchChar = (c) => { setActiveChar(c); setMessages([{ from: "char", text: c.greeting }]); setInput(""); };
+
+  const send = () => {
+    const text = input.trim();
+    if (!text) return;
+    setMessages((m) => [...m, { from: "user", text }]);
+    setInput("");
+    setTyping(true);
+    setTimeout(() => {
+      setMessages((m) => [...m, { from: "char", text: SAFE_REPLIES[Math.floor(Math.random() * SAFE_REPLIES.length)] }]);
+      setTyping(false);
+    }, 1100);
+  };
+
+  return (
+    <div style={{ background: "radial-gradient(ellipse at 50% 0%, #2E2A5C 0%, #14132C 55%, #0F0E24 100%)", color: "#F3EEE3", minHeight: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ maxWidth: 620, margin: "0 auto", width: "100%", padding: "30px 20px 0", flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ textAlign: "center", marginBottom: 18 }}>
+          <span style={{ fontSize: 11.5, letterSpacing: 2, color: "#E8B24D", fontWeight: 700 }}>CHAT WITH A CHARACTER</span>
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.4rem, 4vw, 1.9rem)", margin: "8px 0" }}>A Safe Little Chat</h1>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, opacity: 0.6 }}><ShieldCheck size={12} color="#8FD3C8" /> Every reply is gentle, kind, and made for young readers</div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, marginBottom: 14 }}>
+          {CHAT_CHARACTERS.map((c) => (
+            <button key={c.name} onClick={() => switchChar(c)} style={{
+              display: "flex", alignItems: "center", gap: 7, padding: "8px 13px", borderRadius: 999,
+              border: `1px solid ${activeChar.name === c.name ? c.color : "rgba(255,255,255,0.15)"}`,
+              background: activeChar.name === c.name ? `${c.color}22` : "rgba(255,255,255,0.04)", color: "#F3EEE3",
+              fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0, cursor: "pointer",
+            }}><span style={{ fontSize: 15 }}>{c.icon}</span> {c.name}</button>
+          ))}
+        </div>
+
+        <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px 20px 0 0", display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 340 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "13px 16px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: activeChar.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>{activeChar.icon}</div>
+            <div style={{ fontWeight: 700, fontSize: 13.5 }}>{activeChar.name}</div>
+          </div>
+
+          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 11 }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ alignSelf: m.from === "user" ? "flex-end" : "flex-start", maxWidth: "78%", animation: "wtBubbleIn 0.3s ease" }}>
+                <div style={{ background: m.from === "user" ? "#E8B24D" : "rgba(255,255,255,0.09)", color: m.from === "user" ? "#1C1A3A" : "#F3EEE3", padding: "9px 14px", borderRadius: m.from === "user" ? "15px 15px 4px 15px" : "15px 15px 15px 4px", fontSize: 13, lineHeight: 1.5 }}>{m.text}</div>
+              </div>
+            ))}
+            {typing && (
+              <div style={{ alignSelf: "flex-start", display: "flex", gap: 4, padding: "9px 14px", background: "rgba(255,255,255,0.09)", borderRadius: "15px 15px 15px 4px" }}>
+                {[0, 1, 2].map((i) => <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#F3EEE3", opacity: 0.6, animation: `wtBounce 1s ${i * 0.15}s infinite` }} />)}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 8, padding: "13px 15px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder={`Say something to ${activeChar.name.split(" ")[0]}…`} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 999, padding: "9px 15px", color: "#F3EEE3", fontSize: 13, outline: "none" }} />
+            <button onClick={send} style={{ width: 38, height: 38, borderRadius: "50%", border: "none", background: activeChar.color, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Send size={15} color="#1C1A3A" /></button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center", padding: "13px 0 26px", fontSize: 10.5, opacity: 0.5 }}><Sparkles size={10} color="#E8B24D" /> Parents can review every conversation from the Parent Dashboard</div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== CHILD DASHBOARD ============================== */
+
+const XP_CURRENT = 640, XP_LEVEL_MAX = 1000, LEVEL = 7;
+const BADGES = [{ icon: "🐉", name: "Dragon Friend", earned: true }, { icon: "🌙", name: "Night Reader", earned: true }, { icon: "🧭", name: "Explorer", earned: true }, { icon: "🎧", name: "Great Listener", earned: true }, { icon: "🏰", name: "Castle Keeper", earned: false }, { icon: "✨", name: "Star Collector", earned: false }];
+const WEEK = [{ day: "M", done: true }, { day: "T", done: true }, { day: "W", done: true }, { day: "T", done: true }, { day: "F", done: false }, { day: "S", done: false }, { day: "S", done: false }];
+const RECENT = [{ title: "The Door in the Emerald Forest", mode: "read", when: "Today" }, { title: "The Owl Who Lost Her Song", mode: "listen", when: "Yesterday" }, { title: "Petals for the Moon Queen", mode: "watch", when: "2 days ago" }];
+
+function StatCard({ icon: Icon, value, label, color }) {
+  return (
+    <div style={{ flex: "1 1 120px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, padding: "16px 14px", display: "flex", flexDirection: "column", gap: 7 }}>
+      <div style={{ width: 30, height: 30, borderRadius: 9, background: `${color}25`, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon size={15} color={color} /></div>
+      <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700 }}>{value}</div>
+      <div style={{ fontSize: 12, opacity: 0.65 }}>{label}</div>
+    </div>
+  );
+}
+
+function ChildDashboardPage({ go }) {
+  const xpPercent = (XP_CURRENT / XP_LEVEL_MAX) * 100;
+  return (
+    <div style={{ background: "radial-gradient(ellipse at 50% -10%, #3A2E68 0%, #14132C 55%, #0F0E24 100%)", color: "#F3EEE3", minHeight: "100%" }}>
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: "40px 24px 80px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", marginBottom: 34 }}>
+          <div style={{ width: 68, height: 68, borderRadius: "50%", background: "linear-gradient(160deg, #E8B24D, #B49AE8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, flexShrink: 0 }}>🦊</div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+              <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.3rem, 4vw, 1.7rem)", margin: 0 }}>Zoya's Kingdom</h1>
+              <span style={{ fontSize: 11.5, fontWeight: 700, background: "rgba(232,178,77,0.2)", color: "#E8B24D", padding: "4px 9px", borderRadius: 999 }}>Level {LEVEL} · Firefly Ranger</span>
+            </div>
+            <div style={{ marginTop: 9, maxWidth: 340 }}>
+              <div style={{ height: 7, borderRadius: 999, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}><div style={{ height: "100%", width: `${xpPercent}%`, background: "linear-gradient(90deg, #E8B24D, #F4C9E0)", borderRadius: 999 }} /></div>
+              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 5 }}>{XP_CURRENT} / {XP_LEVEL_MAX} XP to Level {LEVEL + 1}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 34 }}>
+          <StatCard icon={BookOpen} value="23" label="Books completed" color="#E8B24D" />
+          <StatCard icon={Headphones} value="14" label="Stories listened" color="#B49AE8" />
+          <StatCard icon={Film} value="9" label="Stories watched" color="#7EC8E3" />
+          <StatCard icon={Gem} value="312" label="Magic crystals" color="#F4C9E0" />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 18 }} className="wt-dash-grid">
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
+            <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: "20px 20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}><Flame size={16} color="#E8B24D" /><span style={{ fontWeight: 700, fontSize: 14 }}>4-Day Reading Streak</span></div>
+              <div style={{ display: "flex", gap: 9 }}>
+                {WEEK.map((d, i) => (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                    <div style={{ width: 29, height: 29, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: d.done ? "#E8B24D" : "rgba(255,255,255,0.08)", color: d.done ? "#1C1A3A" : "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 700 }}>{d.done ? "🔥" : d.day}</div>
+                    <span style={{ fontSize: 10, opacity: 0.5 }}>{d.day}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: "20px 20px" }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Recent Adventures</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                {RECENT.map((r) => {
+                  const Icon = modeIcon[r.mode];
+                  return (
+                    <div key={r.title} style={{ display: "flex", alignItems: "center", gap: 11 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(232,178,77,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon size={14} color="#E8B24D" /></div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.title}</div>
+                        <div style={{ fontSize: 11, opacity: 0.55 }}>{r.when}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ borderRadius: 18, padding: "20px 20px", background: "linear-gradient(135deg, rgba(180,154,232,0.25), rgba(232,178,77,0.15))", border: "1px solid rgba(232,178,77,0.35)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}><Sparkles size={15} color="#F4C9E0" /><span style={{ fontWeight: 700, fontSize: 14 }}>Today's Challenge</span></div>
+              <p style={{ fontSize: 13, opacity: 0.85, margin: "0 0 12px", lineHeight: 1.5 }}>Listen to one Ocean story and spot three hidden seashells for +40 XP.</p>
+              <button onClick={() => go("listen")} style={{ border: "none", background: "#E8B24D", color: "#1C1A3A", fontWeight: 700, fontSize: 12.5, padding: "8px 16px", borderRadius: 999, cursor: "pointer" }}>Start Challenge</button>
+            </div>
+          </div>
+
+          <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: "20px 20px", alignSelf: "start" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}><Award size={16} color="#F4C9E0" /><span style={{ fontWeight: 700, fontSize: 14 }}>Badge Collection</span></div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+              {BADGES.map((b) => (
+                <div key={b.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "12px 5px", borderRadius: 13, background: b.earned ? "rgba(232,178,77,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${b.earned ? "rgba(232,178,77,0.4)" : "rgba(255,255,255,0.08)"}`, opacity: b.earned ? 1 : 0.4 }}>
+                  <div style={{ fontSize: 20 }}>{b.icon}</div>
+                  <div style={{ fontSize: 9.5, fontWeight: 600, textAlign: "center", lineHeight: 1.3 }}>{b.name}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 14, fontSize: 11.5, opacity: 0.6 }}><Star size={11} color="#E8B24D" /> 4 of 6 badges earned</div>
+          </div>
+        </div>
+      </div>
+      <style>{`@media (max-width: 720px) { .wt-dash-grid { grid-template-columns: 1fr !important; } }`}</style>
+    </div>
+  );
+}
+
+/* ============================== PARENT DASHBOARD ============================== */
+
+const WEEK_DATA = [{ day: "Mon", mins: 22 }, { day: "Tue", mins: 35 }, { day: "Wed", mins: 18 }, { day: "Thu", mins: 40 }, { day: "Fri", mins: 12 }, { day: "Sat", mins: 28 }, { day: "Sun", mins: 8 }];
+const VOCAB_GROWTH = [{ month: "Apr", words: 120 }, { month: "May", words: 165 }, { month: "Jun", words: 210 }, { month: "Jul", words: 268 }];
+const CHILDREN = [{ name: "Zoya", age: 7, avatar: "🦊" }, { name: "Idris", age: 5, avatar: "🐢" }];
+const RECOMMENDATIONS = [{ title: "Comet's First Sleepover", reason: "Zoya finished 3 Space stories this week" }, { title: "The Kindest Knight", reason: "Builds on 'friendship' theme she favorites most" }, { title: "Whisper Under the Stars", reason: "Matches her current reading level" }];
+
+function Bars({ data, valueKey, labelKey, color, max }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 9, height: 120 }}>
+      {data.map((d) => (
+        <div key={d[labelKey]} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, flex: 1 }}>
+          <div style={{ width: "100%", maxWidth: 28, height: `${(d[valueKey] / max) * 100}%`, minHeight: 4, borderRadius: "8px 8px 3px 3px", background: `linear-gradient(180deg, ${color}, ${color}88)`, transition: "height 0.4s ease" }} />
+          <span style={{ fontSize: 10, opacity: 0.55 }}>{d[labelKey]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Toggle({ defaultOn }) {
+  const [on, setOn] = useState(defaultOn);
+  return (
+    <div onClick={() => setOn((v) => !v)} style={{ width: 38, height: 21, borderRadius: 999, background: on ? "#E8B24D" : "rgba(43,36,64,0.2)", padding: 3, flexShrink: 0, cursor: "pointer" }}>
+      <div style={{ width: 15, height: 15, borderRadius: "50%", background: "white", transform: on ? "translateX(17px)" : "translateX(0)", transition: "transform 0.2s ease" }} />
+    </div>
+  );
+}
+
+function PremiumCard() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Reflects the ?checkout=success / ?checkout=canceled redirect Stripe sends back
+  const checkoutStatus = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("checkout")
+    : null;
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/create-checkout-session", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url; // send them to Stripe's real, hosted checkout page
+      } else {
+        setError(data.error || "Something went wrong starting checkout.");
+      }
+    } catch (e) {
+      setError("Couldn't reach the checkout server. This only works once deployed with a real Stripe key set up — see the README.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ background: "linear-gradient(135deg, rgba(43,36,64,0.06), rgba(232,178,77,0.12))", border: "1px solid rgba(232,178,77,0.3)", borderRadius: 18, padding: "20px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <Sparkles size={15} color="#B4903A" />
+        <span style={{ fontWeight: 700, fontSize: 13.5 }}>WonderTale Premium</span>
+      </div>
+      <p style={{ fontSize: 12.5, opacity: 0.75, lineHeight: 1.6, margin: "0 0 14px" }}>
+        Unlock every kingdom, unlimited AI story generation, and offline downloads for the whole family — $6.99/month.
+      </p>
+
+      {checkoutStatus === "success" && (
+        <p style={{ fontSize: 12, color: "#2E7D5B", fontWeight: 700, marginBottom: 10 }}>✓ Subscription active — welcome to Premium!</p>
+      )}
+      {checkoutStatus === "canceled" && (
+        <p style={{ fontSize: 12, color: "#B4633A", fontWeight: 700, marginBottom: 10 }}>Checkout was canceled — no charge was made.</p>
+      )}
+      {error && <p style={{ fontSize: 11.5, color: "#B4633A", marginBottom: 10 }}>{error}</p>}
+
+      <button
+        onClick={handleUpgrade}
+        disabled={loading}
+        style={{
+          border: "none", background: "#2B2440", color: "#FBF3E7", fontWeight: 700, fontSize: 12.5,
+          padding: "10px 18px", borderRadius: 999, cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
+        }}
+      >
+        {loading ? "Redirecting to checkout…" : "Upgrade to Premium"}
+      </button>
+    </div>
+  );
+}
+
+function ParentDashboardPage() {
+  const [activeChild, setActiveChild] = useState(0);
+  const [timeLimit, setTimeLimit] = useState(45);
+  const [dailyGoal, setDailyGoal] = useState(3);
+  const [showReport, setShowReport] = useState(false);
+  const [weeklyReports, setWeeklyReports] = useState(true);
+  const child = CHILDREN[activeChild];
+  const maxMins = Math.max(...WEEK_DATA.map((d) => d.mins));
+  const maxWords = Math.max(...VOCAB_GROWTH.map((d) => d.words));
+
+  return (
+    <div style={{ background: "#FBF3E7", color: "#2B2440", minHeight: "100%" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "38px 24px 80px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14, marginBottom: 26 }}>
+          <div>
+            <span style={{ fontSize: 11.5, letterSpacing: 2, color: "#B4903A", fontWeight: 700 }}>PARENT DASHBOARD</span>
+            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(1.5rem, 4vw, 2rem)", margin: "7px 0 0" }}>How the Kingdom's Been This Week</h1>
+          </div>
+          <button onClick={() => setWeeklyReports((v) => !v)} style={{ display: "flex", alignItems: "center", gap: 6, border: `1px solid ${weeklyReports ? "#E8B24D" : "rgba(43,36,64,0.15)"}`, background: weeklyReports ? "rgba(232,178,77,0.15)" : "white", borderRadius: 999, padding: "8px 15px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", color: "#2B2440" }}><Bell size={13} /> Weekly reports {weeklyReports ? "on" : "off"}</button>
+        </div>
+
+        <div style={{ display: "flex", gap: 9, marginBottom: 26 }}>
+          {CHILDREN.map((c, i) => (
+            <div key={c.name} onClick={() => setActiveChild(i)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 15px", borderRadius: 999, border: `1px solid ${activeChild === i ? "#E8B24D" : "rgba(43,36,64,0.15)"}`, background: activeChild === i ? "rgba(232,178,77,0.15)" : "white", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+              <span style={{ fontSize: 15 }}>{c.avatar}</span>{c.name} · {c.age}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }} className="wt-parent-grid">
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {[{ icon: Clock, value: "23h", label: "Screen time this month", color: "#E8B24D" }, { icon: BookOpen, value: "23", label: "Books completed", color: "#7EC8E3" }, { icon: TrendingUp, value: "+58", label: "New words this month", color: "#8FD3C8" }].map((s) => (
+                <div key={s.label} style={{ flex: "1 1 140px", background: "white", border: "1px solid rgba(43,36,64,0.1)", borderRadius: 16, padding: "16px 14px" }}>
+                  <s.icon size={15} color={s.color} style={{ marginBottom: 9 }} />
+                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700 }}>{s.value}</div>
+                  <div style={{ fontSize: 11.5, opacity: 0.6 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "white", border: "1px solid rgba(43,36,64,0.1)", borderRadius: 18, padding: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}><BarChart3 size={15} color="#E8B24D" /><span style={{ fontWeight: 700, fontSize: 13.5 }}>Minutes Read Per Day</span></div>
+              <Bars data={WEEK_DATA} valueKey="mins" labelKey="day" color="#E8B24D" max={maxMins} />
+            </div>
+
+            <div style={{ background: "white", border: "1px solid rgba(43,36,64,0.1)", borderRadius: 18, padding: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}><TrendingUp size={15} color="#8FD3C8" /><span style={{ fontWeight: 700, fontSize: 13.5 }}>Vocabulary Growth</span></div>
+              <Bars data={VOCAB_GROWTH} valueKey="words" labelKey="month" color="#8FD3C8" max={maxWords} />
+            </div>
+
+            <div style={{ background: "white", border: "1px solid rgba(43,36,64,0.1)", borderRadius: 18, padding: "20px" }}>
+              <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 13 }}>Recommended for {child.name}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                {RECOMMENDATIONS.map((r) => (
+                  <div key={r.title} style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
+                    <div style={{ fontSize: 16, marginTop: 1 }}>📖</div>
+                    <div><div style={{ fontSize: 13, fontWeight: 700 }}>{r.title}</div><div style={{ fontSize: 11.5, opacity: 0.6 }}>{r.reason}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ background: "white", border: "1px solid rgba(43,36,64,0.1)", borderRadius: 18, padding: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}><ShieldCheck size={15} color="#7EC8E3" /><span style={{ fontWeight: 700, fontSize: 13.5 }}>Parental Controls</span></div>
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 7 }}><span style={{ fontWeight: 600 }}>Daily time limit</span><span style={{ color: "#B4903A", fontWeight: 700 }}>{timeLimit} min</span></div>
+                <input type="range" min={15} max={120} step={5} value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))} style={{ width: "100%", accentColor: "#E8B24D" }} />
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 7 }}><span style={{ fontWeight: 600 }}>Daily reading goal</span><span style={{ color: "#B4903A", fontWeight: 700 }}>{dailyGoal} stories</span></div>
+                <input type="range" min={1} max={8} value={dailyGoal} onChange={(e) => setDailyGoal(Number(e.target.value))} style={{ width: "100%", accentColor: "#E8B24D" }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                {["Bedtime mode (9pm–7am)", "Restrict to age-appropriate content", "Allow AI story generator"].map((label, i) => (
+                  <label key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>{label}<Toggle defaultOn={i !== 2} /></label>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: "white", border: "1px solid rgba(43,36,64,0.1)", borderRadius: 18, padding: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 13 }}><Sliders size={15} color="#B49AE8" /><span style={{ fontWeight: 700, fontSize: 13.5 }}>Learning Focus</span></div>
+              <p style={{ fontSize: 12.5, opacity: 0.7, lineHeight: 1.6, margin: "0 0 11px" }}>{child.name} is strongest in vocabulary and comprehension. Gentle nudge toward science stories could round things out.</p>
+              <button onClick={() => setShowReport(true)} style={{ display: "flex", alignItems: "center", gap: 6, border: "none", background: "#2B2440", color: "#FBF3E7", fontWeight: 700, fontSize: 12, padding: "9px 15px", borderRadius: 999, cursor: "pointer" }}>View Full Report <ChevronDown size={12} /></button>
+            </div>
+
+            <PremiumCard />
+          </div>
+        </div>
+      </div>
+
+      {showReport && (
+        <div onClick={() => setShowReport(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#FBF3E7", color: "#2B2440", borderRadius: 22, padding: "30px 28px", maxWidth: 480, width: "100%", maxHeight: "80vh", overflowY: "auto", border: "1px solid rgba(43,36,64,0.1)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+              <div>
+                <span style={{ fontSize: 11, letterSpacing: 2, color: "#B4903A", fontWeight: 700 }}>FULL REPORT</span>
+                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 21, margin: "6px 0 0" }}>{child.name}'s July Summary</h2>
+              </div>
+              <button onClick={() => setShowReport(false)} style={{ background: "none", border: "none", color: "#2B2440", opacity: 0.6, cursor: "pointer" }}><X size={19} /></button>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, margin: "18px 0", flexWrap: "wrap" }}>
+              {[
+                { label: "Avg. reading level", value: "Ahead by 4 mo." },
+                { label: "Comprehension score", value: "88%" },
+                { label: "Favorite theme", value: "Fantasy" },
+              ].map((s) => (
+                <div key={s.label} style={{ flex: "1 1 130px", background: "white", borderRadius: 14, padding: "12px 14px", border: "1px solid rgba(43,36,64,0.08)" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Fraunces', serif" }}>{s.value}</div>
+                  <div style={{ fontSize: 11, opacity: 0.6 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Strengths</div>
+              <p style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.8, margin: 0 }}>
+                {child.name} reads slightly above grade level and shows strong recall in comprehension quizzes.
+                Vocabulary has grown by 58 words this month, mostly from Fantasy and Friendship stories.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Suggested Focus</div>
+              <p style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.8, margin: 0 }}>
+                Science and Space stories are underexplored — introducing one per week could round out curiosity
+                without disrupting favorite themes.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>This Month at a Glance</div>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.8, opacity: 0.85 }}>
+                <li>23 stories completed across read, listen, and watch modes</li>
+                <li>4-day current reading streak, 12-day longest streak this month</li>
+                <li>3 new badges earned</li>
+              </ul>
+            </div>
+
+            <button onClick={() => setShowReport(false)} style={{ border: "none", background: "#2B2440", color: "#FBF3E7", fontWeight: 700, fontSize: 13, padding: "10px 20px", borderRadius: 999, cursor: "pointer" }}>
+              Close Report
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`@media (max-width: 720px) { .wt-parent-grid { grid-template-columns: 1fr !important; } }`}</style>
+    </div>
+  );
+}
+
+/* ============================== APP ROOT ============================== */
+
+export default function WonderTaleApp() {
+  const [page, setPage] = useState("home");
+
+  const go = (id) => {
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+    setPage(id);
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  };
+
+  const renderPage = () => {
+    switch (page) {
+      case "home": return <HomePage go={go} />;
+      case "reader": return <StoryReaderPage go={go} />;
+      case "listen": return <ListenModePage />;
+      case "watch": return <WatchModePage go={go} />;
+      case "library": return <MagicalLibraryPage go={go} />;
+      case "map": return <WorldMapPage go={go} />;
+      case "adventure": return <InteractiveAdventurePage />;
+      case "generator": return <AIStoryGeneratorPage go={go} />;
+      case "chat": return <AICharacterChatPage />;
+      case "child": return <ChildDashboardPage go={go} />;
+      case "parent": return <ParentDashboardPage />;
+      default: return <HomePage go={go} />;
+    }
+  };
+
+  return (
+    <div style={{ fontFamily: "'Quicksand', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Quicksand:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        @keyframes wtTwinkle { 0%, 100% { opacity: 0.15; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.15); } }
+        @keyframes wtCircleDragon { 0% { transform: rotate(0deg) translateX(190px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(190px) rotate(-360deg); } }
+        @keyframes wtFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wtFadeScene { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes wtFloatDisc { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+        @keyframes wtSpinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes wtSpin { to { transform: rotate(360deg); } }
+        @keyframes wtSparklePop { 0% { opacity: 0; transform: scale(0.6) translateY(6px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes wtPulseRing { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.2); opacity: 0; } }
+        @keyframes wtSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wtBubbleIn { from { opacity: 0; transform: translateY(6px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes wtBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+        @keyframes wtCastleGlow {
+          0%, 100% { filter: drop-shadow(0 0 18px rgba(232,178,77,0.3)); }
+          50% { filter: drop-shadow(0 0 34px rgba(232,178,77,0.55)); }
+        }
+
+        .wt-btn-portal { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .wt-btn-portal:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 12px 30px rgba(232,178,77,0.35); }
+        .wt-cat-card { transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease; }
+        .wt-cat-card:hover { transform: translateY(-6px); border-color: rgba(232,178,77,0.6); background: rgba(255,255,255,0.09); }
+        .wt-kingdom-card { transition: transform 0.3s ease; }
+        .wt-kingdom-card:hover { transform: translateY(-6px); }
+
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+      `}</style>
+
+      <TopNav page={page} setPage={go} />
+      {renderPage()}
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<WonderTaleApp />);
+</script>
+
+<!-- Bootstrap: transforms the JSX above with the CLASSIC runtime (so it only needs
+     react/react-dom/lucide-react, matching the import map above), then runs it as a
+     real ES module so its "import" statements resolve correctly. -->
+<script>
+  try {
+    const source = document.getElementById("app-source").textContent;
+    const { code } = Babel.transform(source, {
+      presets: [["react", { runtime: "classic" }]],
+      sourceType: "module",
+      filename: "app.jsx",
+    });
+    const blob = new Blob([code], { type: "text/javascript" });
+    const url = URL.createObjectURL(blob);
+    import(url).catch((err) => {
+      document.getElementById("boot-error").style.display = "block";
+      document.getElementById("boot-error").textContent =
+        "Failed to load the app module:\n" + err.message;
+      console.error(err);
+    });
+  } catch (err) {
+    document.getElementById("boot-error").style.display = "block";
+    document.getElementById("boot-error").textContent =
+      "Failed to compile the app (Babel transform error):\n" + err.message;
+    console.error(err);
+  }
+</script>
+</body>
+</html>
